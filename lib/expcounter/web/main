@@ -1,0 +1,130 @@
+#!/bin/ksh
+
+PATH=$PATH:/opt/exp/bin:/opt/exp/lib/unity/bin
+COUNTDIR=/usr/expcounters
+
+cat << EOF
+Content-type: text/html
+
+	<!DOCTYPE HTML SYSTEM "html.dtd">
+	<HEAD>
+		<TITLE>Exptools usage statistics</TITLE>
+	</HEAD>
+	<BODY>
+	<FONT SIZE=+3>Exptools usage statistics</FONT>
+	<P>
+	<STRONG>(This page is under construction.  <a href="mailto:exptools@lucent.com">Suggestions welcome!</a>
+	</STRONG>
+	<P>
+	Note that statistics are only collected for tools where
+	the provider has explicitly enabled the data collection.
+	For information on how to do this, refer to the
+	<A HREF="http://webdoc.ih.lucent.com/man/exptools/expcounter.html">expcounter man page.</A>
+	<BR>
+	<HR>
+	Statistical data on most tools are kept for two years.  Some
+	tools are considered "high runners" and data is kept for only
+	two months.
+	<HR>
+	<FONT SIZE=+2>Totals for packages:</FONT>
+	<P>
+	<FORM ACTION="/expcounter/expcounter-fmt.cgi" METHOD="GET">
+		<P>
+		Select the package: 
+		<SELECT NAME="tool" SIZE=1>
+		<OPTION> Pick a package:
+EOF
+ls $COUNTDIR/*/counternames | \
+ sort | uniq | sed -e s%$COUNTDIR/%'<OPTION> %' -e 's/\/counternames//'
+cat << EOF
+		<OPTION VALUE="All Packages"> All Packages (CPU Intensive!)
+		</SELECT>
+		<P>
+		<P>
+		Select the time period:
+		<SELECT NAME="period" SIZE=1>
+		<OPTION> Last Hour~
+		<OPTION> Last Whole Hour
+		<OPTION SELECTED> Today~
+		<OPTION> Yesterday
+		<OPTION> Last Seven Days~
+		<OPTION> This Month~
+		<OPTION> Last Whole Month
+		<OPTION> This Year~	
+		<OPTION VALUE="Total Usage"> Total Usage (CPU Intensive!)
+		</SELECT>
+		<P>
+		<INPUT TYPE=hidden name=counttype VALUE="package">
+		<INPUT TYPE="submit" VALUE="Submit Form!" SIZE=40>
+		<INPUT TYPE="reset" VALUE="Clear" SIZE=40>
+
+	</FORM>
+
+	<HR>
+	<FONT SIZE=+2>Access to raw data:</FONT>
+	<P>
+	Print raw unity file containing the following fields:
+	<FORM ACTION="/expcounter/expcounter-raw.cgi" METHOD="GET">
+		<P>
+		<INPUT TYPE=checkbox  name=show_time value=time> Unix Time
+		(Unity field name=time)
+		<BR>
+		<INPUT TYPE=checkbox name=show_package value=package> Package
+		(Unity field name=package)
+		<BR>
+		<INPUT TYPE=checkbox checked name=show_tool value=count> Count Name
+		(Unity field name=count)
+		<BR>
+		<INPUT TYPE=checkbox checked name=show_hostname value=hostname> Hostname
+		(Unity field name=hostname)
+		<BR>
+		<INPUT TYPE=checkbox name=show_pid value=pid> Process ID
+		(Unity field name=pid)
+		<BR>
+		<INPUT TYPE=checkbox checked name=show_type value=type> Machine Type
+		(Unity field name=type)
+		<BR>
+		<INPUT TYPE=checkbox checked name=show_userinfo value=userinfo> User Supplied Info
+		(Unity field name=userinfo)
+		<BR>
+		<INPUT TYPE=checkbox name=show_nodename value=nodename> Node receiving feed 
+		(Unity field name=nodename)
+		<P>
+		Select the package: 
+		<SELECT NAME="tool" SIZE=1>
+		<OPTION> Pick a package:
+EOF
+ls $COUNTDIR/*/counternames | \
+ sort | uniq | sed -e s%$COUNTDIR/%'<OPTION> %' -e 's/\/counternames//'
+cat << EOF
+		<OPTION VALUE="All Packages"> All Packages (CPU Intensive!)
+		</SELECT>
+		<P>
+		Select the time period:
+		<SELECT NAME="period" SIZE=1>
+		<OPTION> Last Hour~
+		<OPTION> Last Whole Hour
+		<OPTION SELECTED> Today~
+		<OPTION> Yesterday
+		<OPTION> Last Seven Days~
+		<OPTION> This Month~
+		<OPTION> Last Whole Month
+		<OPTION> This Year~
+		<OPTION VALUE="Total Usage"> Total Usage (CPU Intensive!)
+		</SELECT>
+		<P>
+		Additional unity "where" clause (e.g. using time, package, count, or hostname) 
+		<BR> Where
+		<INPUT TYPE=text SIZE=50 NAME=whereclause>
+		<P>
+		<INPUT TYPE=checkbox checked name=show_sorted value=sorted> Sort and remove duplicates (only useful if time is not selected)
+		<P>
+		<INPUT TYPE=hidden name=counttype VALUE="raw">
+		<INPUT TYPE="submit" VALUE="Get Unity File" SIZE=40>
+		<INPUT TYPE="reset" VALUE="Clear" SIZE=40>
+
+	</FORM>
+
+	</BODY>
+	</HTML>
+EOF

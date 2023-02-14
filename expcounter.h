@@ -1,0 +1,3 @@
+#define	COUNTERPORT	8664
+#define MAXCOUNTLEN	80
+#define MAXCOUNTERS	25

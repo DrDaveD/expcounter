@@ -1,0 +1,5 @@
+# Attempt to restart the expcounter daemon if necessary
+# For now, limit it to one attempt per day
+0 2 * * * umask 02;/opt/exp/lib/expcounter/expcounterd
+# For Avaya overlord
+0 2 * * * /opt/exp/lib/expcounter/counter.cron

@@ -1,0 +1,129 @@
+.ig
+EMACS_MODES: fill
+..
+.de DS
+.P
+.RS
+.nf
+..
+.de DE
+.fi
+.RE
+.P
+..
+.TH EXPCOUNTER 1 
+.SH NAME
+expcounter - Increment an exptool's usage counter
+.SH SYNOPSIS
+.B expcounter -p package -n toolname [ -u userinfo ]
+.SH "DESCRIPTION"
+.I Expcounter 
+provides a mechanism that allows exptool providers
+to know how often a tool has been executed.  When
+.I expcounter 
+is run, it
+sends a message (using a UDP datagram) to the exptools overlord.  These
+counts are collected and used to generate statistical information on how
+often the various tools are executed.  Both the \fB-p\fP and \fB-n\fP 
+arguments are required.  The \fB-p\fP option is used to specify the
+name of the package.  This must be a valid package name known to the exptools
+distribution system.  The \fB-n\fP is an arbitrary name selected by the tool
+provider, but in general this is intended to be the name of the specific
+tool invoking the counter.  In many cases, the package name and tool
+name will be the same.  However, in other cases, one package may include
+several different tools, each of which can be counted individually.
+However, once the counter names have been selected, the exptools overlord
+must be informed of the names.  This is done by adding a line to the
+updateParameters sections of the package's .npd file.  For example, 
+the xpdf package contains six tools, each of which has its invocations
+individually counted.  So, the
+last two lines of the xpdf.npd file look like this:
+
+.nf
+	updateParameters:
+	  counters xpdf,pdfimages,pdfinfo,pdftopbm,pdftops,pdftotext
+
+.fi
+.P
+Use of \fIexpcounter\fP is optional and is at the tool provider's
+discretion.  Tool usage will not be counted unless the individual exptool 
+is explicitly configured to invoke expcounter.  There are several ways this 
+can be done:
+.P
+Many tools are already started by shell scripts.  This script could be
+modified to include a sequence like 
+.nf
+
+	COUNTER=${TOOLS:-/opt/exp}/bin/expcounter
+	if [ -x $COUNTER ]
+	then
+		$COUNTER -p foopackage -n foobar
+	fi
+
+.fi
+.P
+A compiled program can use the system() function to do something
+along the same lines.  (I've found this works than forking and execing
+excpounter directly, particularly when the package forks for other reasons
+and tries to track its child processes.)
+.nf
+
+	/* Increment expcounter */
+	system("\\
+		COUNTER=${TOOLS:-/opt/exp}/bin/expcounter; \\
+		if [ -x $COUNTER ]; \\
+			then \\
+			$COUNTER -p foopackage -n foobar; \\
+		fi; \\
+	");
+
+.fi
+.P
+If you don't want to modify the source to the program, an alternative would
+be to move the binary to an alternate location (such as the lib directory)
+and replace it with a front-end shell script.   The front end script would
+typically look something like this:
+.nf
+
+	#!/bin/sh
+
+	COUNTER=${TOOLS:-/opt/exp}/bin/expcounter
+	if [ -x $COUNTER ]
+	then
+		$COUNTER -p foopackage -n foobar
+	fi
+
+	exec ${TOOLS:-/opt/exp}/lib/foopackage/foobar ${1+"$@"}
+
+.fi
+where the magic in the last line ensures that foobar is invoked with 
+no arguments when no arguments are supplied, and is properly quoted when
+arguments are supplied.
+
+.P
+The optional \fB-u\fP option allows a small amount of user provided 
+information (up to 80 characters) to be transferred in the message and
+included in the database.
+.P
+When the 
+.I expcounter 
+program is run (with valid arguments),
+it will send a UDP datagram to the exptools overlord to log the 
+execution.  UDP is an unacknowledged transport protocol - if the 
+message can't be delivered (for example because the executing machine
+is not connected to the Lucent intranet) it will be silently
+discarded.   
+.I Expcounter 
+will not generate any error messages in this
+situation (though in some cases it will return a non-zero exit status.)
+.P
+The statistics collected can be viewed on the exptools web server at
+http://exptools.web.lucent.com/expcounter/main.  (This statistics page
+is still under construction - suggestions welcome.)
+.SH  EXAMPLES
+.SH BUGS
+.SH "SEE ALSO"
+.SH AUTHOR
+Peter Fales (psfales@lucent.com)
+.SH PROVIDER
+Peter Fales (psfales@lucent.com)

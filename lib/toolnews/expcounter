@@ -1,0 +1,36 @@
+"Expcounter" is now available as (optional) mechanism for exptools 
+providers to determine how often their tools are being used.
+
+To use the expcounter mechanism, two steps are required:
+
+1) Add a "counters" line to the updateParameters section of your 
+   tool's .npd file.  As an example, the last two lines of the xpdf.npd
+   file used by the xpdf package looks like
+
+	updateParameters:
+	  counters xpdf,pdfimages,pdfinfo,pdftopbm,pdftops,pdftotext
+
+   Note that you'll need to distribute this change with an expprovide, 
+   because the collection daemon on the overlord will reject any counts
+   that haven't been explicitly authorized by providers
+   
+2) Modify your tool to invoke "expcounter."  The expcounter man page
+   has some hints on how to do this, but the main thing is that you
+   need to supply two options.  The -p option specifies a package name
+   which must be a valid exptools package, and the -n specifies a counter
+   name which must have been specified as part of the updateParameters in
+   the package's .npd file.  It's also a good idea to make sure the
+   expcounter program exists and is executable.  When the program is run,
+   it will send a UDP datagram to the exptools overlord to log the 
+   execution.  UDP is an unacknowledged transport protocol - if the 
+   message can't be delivered (for example because the executing machine
+   is not connected to the Lucent intranet) it will be silently
+   discarded.   Expcounter will not generate any error messages in this
+   situation (though in some cases it will return a non-zero exit status)
+
+3) Check the counter statistics page at 
+
+   http://exptools.web.lucent.com/expcounter/main
+
+   There is also a link to this page on the exptools home page.
+

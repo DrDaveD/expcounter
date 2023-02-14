@@ -1,0 +1,136 @@
+#!/opt/exp/adm/bin/ksh
+
+TMP=/tmp/counters.$$
+
+set -e
+
+function updateCounters {
+	PACKAGE=""
+	SOURCE=""
+	HOMEPAGE=""
+	CARRYOVER=false
+	ETYPE=""
+	RELEASENOTE="cvs import"
+	MAINTAINER=""
+	NEWTOOLNEWS=false
+	COUNTERS=""
+
+	while true
+	do
+	    if [ "$CARRYOVER" = false ]
+	    then
+		if read FIRST REST; then :; else break; fi
+	    fi
+	    CARRYOVER=false
+	    case $FIRST in
+		package:) PACKAGE=$REST;;
+		executableTypes:) read ETYPE;;
+		maintainers:) read MAINTAINER;;
+		releaseNote:)
+		    RELEASENOTE=
+		    while read ALL
+		    do
+			echo "$ALL"|read FIRST REST
+			case $FIRST in
+			    *:) break;;
+			esac
+			if test -n "$RELEASENOTE"; then
+			    # insert a newline
+			    RELEASENOTE="$RELEASENOTE
+"
+			fi
+			RELEASENOTE="$RELEASENOTE$ALL"
+		    done
+		    CARRYOVER=true
+		    ;;
+		paths:)
+		    while read FIRST REST
+		    do
+			case $FIRST in
+			    *:) break;;
+			    */toolnews/$PACKAGE) NEWTOOLNEWS=true;;
+			esac
+		    done
+		    CARRYOVER=true
+		    ;;
+		updateParameters:)
+		    while read FIRST REST
+		    do
+			case $FIRST in
+			    *:) break;;
+			    source) SOURCE="$REST";;
+			    homePage) HOMEPAGE="$REST";;
+				    counters) COUNTERS="$REST"
+			esac
+		    done
+		    CARRYOVER=true
+		    ;;
+	    esac
+	done < $1
+
+	# Create/Update expcounter directory
+	if [ -n "$COUNTERSDIR" ]; then
+	    COUNTERD=$COUNTERSDIR/$PACKAGE
+	    if [ -n "$COUNTERS" ]; then
+		if [ -d $COUNTERSDIR ]; then
+		    if [ ! -d $COUNTERD ]; then
+			echo "Creating expcounter directory for $PACKAGE"
+ 			mkdir $COUNTERD
+		    fi
+		    NEWCOUNTERS="`echo $COUNTERS|tr ', ' '\n\n'`"
+		    COUNTERF=$COUNTERD/counternames
+		    OLDCOUNTERS=""
+		    if [ -f  $COUNTERF ]; then
+			OLDCOUNTERS="`cat $COUNTERF`"
+		    fi
+		    if [ "$NEWCOUNTERS" != "$OLDCOUNTERS" ]; then
+			echo "Updating expcounter names for $PACKAGE" 
+
+	 		echo "$NEWCOUNTERS" >$COUNTERF
+
+		    fi
+		fi
+	    else
+		if [ -d $COUNTERD ]; then
+		    echo "Removing expcounter directory for $PACKAGE"
+echo "Please remove expcounter directory manually for $PACKAGE" | mail exptools@lucent.com
+	
+echo	 	    rm -rf $COUNTERD
+		fi
+	    fi
+	fi
+}
+
+
+if [ -f ~expadmin/.rugdata ]
+then
+    eval `sed -n -e 's/^countersDir[ 	]*/COUNTERSDIR=/p' \
+	-e 's/^topsDir[ 	]*/TOPSDIR=/p' \
+	~expadmin/.rugdata`
+
+    if [ -d "$COUNTERSDIR" ]
+    then 
+	    cd $COUNTERSDIR
+
+	    # Get a list of all .nsb files
+# PSF 12/10/02 - Don't look at isolaris - the generated nsb files
+# don't have counters
+	    ls $TOPSDIR/!(isolaris)/adm/nsbd/expdb | grep '\.nsb$'| sort | uniq > $TMP
+	    # Now for each file find the type with with most recent
+	    # timestamp, and use it to verify/update counters
+	
+	    for i in `cat $TMP`
+	    do
+# PSF 12/10/02 - Don't look at isolaris - the generated nsb files
+# don't have counters
+		NSBFILE=`ls -t $TOPSDIR/!(isolaris)/adm/nsbd/expdb/$i | head -1`
+		updateCounters $NSBFILE
+	    done
+	
+	    rm $TMP
+    fi
+fi
+
+
+
+

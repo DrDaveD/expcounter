@@ -1,0 +1,30 @@
+#!/opt/exp/bin/ksh
+#
+# expcounter:       Starts the expcounter daemon
+#
+# chkconfig: 2345 98 98
+# description: Starts and stops the expcounter daemon
+#
+# processname: expcounterd
+
+# Next line used if we ever want to paramaeterize the user id
+#eval `sed -n -e 's/^countersUser[ 	]*/countersUser=/p' \
+#              ~expadmin/.rugdata 2> /dev/null`
+# But, for now just use:
+countersUser=www
+
+case "$1" in 
+stop ) 
+    killall expcounterd
+    ;;
+start )
+    su $countersUser -c "umask 02;/opt/exp/lib/expcounter/expcounterd"
+    ;;
+restart )
+    killall expcounterd
+    su $countersUser -c "umask 02;/opt/exp/lib/expcounter/expcounterd"
+    ;;
+* )
+    echo "usage: $0 [ start | stop | restart ]"
+    ;;
+esac

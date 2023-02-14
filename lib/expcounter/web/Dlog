@@ -1,0 +1,9 @@
+time	t:	9l	Unix Time
+package	t:	8l	Package
+count	t:	10l	Tool
+hostname	t:	15l	Hostname
+uid	t:	6l	uid
+pid	t:	6l	pid
+type	t:	6l	type
+userinfo	t:	8l	userinfo
+nodename	t\n	1l	nodename
